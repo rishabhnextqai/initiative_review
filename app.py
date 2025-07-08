@@ -527,10 +527,11 @@ elif page == "Upload Ranks":
                 st.dataframe(df[["initiativename", "rank"]])
                 if st.button("Submit from Excel"):
                     rows = df[["initiativename", "rank"]].dropna().to_dict("records")
-                    payload = {"account": st.session_state.get("account_for_ranks", ""), "rows": rows}
-                    if not payload["account"]:
-                        st.error("Please enter the Account Name in the field below.")
+                    account = st.session_state.get("account_for_ranks", "")
+                    if not account:
+                        st.error("Please enter the Account Name below before submitting.")
                     else:
+                        payload = {"account": account, "rows": rows}
                         resp = requests.post(
                             f"{API_BASE}/api/update_ranks",
                             headers=HEADERS,
@@ -557,14 +558,22 @@ elif page == "Upload Ranks":
     if st.button("➕ Add Row"):
         st.session_state.rows.append({"initiativename": "", "rank": 1})
 
+    # Render rows with delete support
+    row_to_delete = None
     for idx, row in enumerate(st.session_state.rows):
         c1, c2, c3 = st.columns([4, 1, 1])
         ini = c1.text_input("Initiative", value=row["initiativename"], key=f"ini{idx}")
         rk  = c2.number_input("Rank", value=row["rank"], min_value=1, key=f"rk{idx}")
         if c3.button("❌", key=f"del{idx}"):
-            st.session_state.rows.pop(idx)
-            st.experimental_rerun()
+            row_to_delete = idx
         st.session_state.rows[idx] = {"initiativename": ini, "rank": rk}
+
+        if row_to_delete is not None:
+            break  # stop rendering further rows to avoid index mismatch
+
+    # If a delete button was clicked, remove that row
+    if row_to_delete is not None:
+        st.session_state.rows.pop(row_to_delete)
 
     if st.button("Submit Manual Ranks"):
         if not account:
@@ -584,5 +593,3 @@ elif page == "Upload Ranks":
                 st.session_state.rows = []
             else:
                 st.error(f"Update failed ({resp.status_code}): {resp.text}")
-
-
