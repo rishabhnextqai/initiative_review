@@ -452,6 +452,152 @@
 
 
 
+# #!/usr/bin/env python3
+# import os
+# import requests
+# import streamlit as st
+# import pandas as pd
+
+# # ─── Config from Streamlit Secrets ───────────────────────────
+# API_BASE = os.getenv("RM_API_BASE")  # e.g. https://rm.example.com:8008
+# API_KEY  = os.getenv("RM_API_KEY")
+# HEADERS  = {"Authorization": f"Bearer {API_KEY}"}
+
+# st.set_page_config(page_title="Initiative Review", layout="wide")
+# st.title("Initiative Review (Cloud UI)")
+
+# page = st.sidebar.selectbox("Go to", ["Setup", "Upload Feedback", "Upload Ranks"])
+
+# if page == "Setup":
+#     st.header("1. Setup & Operations")
+#     ds_path   = st.text_input("Full path including 'DS' folder")
+#     operation = st.selectbox("Select Operation", [
+#         "generate till initiatives",
+#         "generate only initiatives",
+#         "generate ranking",
+#         "generate reports",
+#     ])
+#     account   = st.text_input("Account Name")
+
+#     if st.button("Run Setup"):
+#         if not ds_path or not operation or not account:
+#             st.error("All fields are required.")
+#         else:
+#             resp = requests.post(
+#                 f"{API_BASE}/api/setup",
+#                 headers=HEADERS,
+#                 data={"ds_path": ds_path, "operation": operation, "account": account},
+#                 timeout=30
+#             )
+#             if resp.status_code == 200:
+#                 st.success(resp.json())
+#             else:
+#                 st.error(f"Error ({resp.status_code}): {resp.text}")
+
+# elif page == "Upload Feedback":
+#     st.header("2. Upload Feedback")
+#     uploaded = st.file_uploader("Choose a file to upload")
+#     if uploaded:
+#         files = {"file": (uploaded.name, uploaded.getvalue())}
+#         resp = requests.post(
+#             f"{API_BASE}/api/upload",
+#             headers=HEADERS,
+#             files=files,
+#             timeout=30
+#         )
+#         if resp.status_code == 200:
+#             st.success(f"Uploaded: {resp.json().get('filename')}")
+#         else:
+#             st.error(f"Upload failed ({resp.status_code}): {resp.text}")
+
+# elif page == "Upload Ranks":
+#     st.header("3. Upload Ranks")
+
+#     # Option A: Excel upload
+#     st.subheader("Option A: Upload Excel file")
+#     excel_file = st.file_uploader(
+#         "Upload an Excel file with columns 'initiativename' and 'rank'",
+#         type=["xlsx"]
+#     )
+#     if excel_file:
+#         try:
+#             df = pd.read_excel(excel_file)
+#             if set(df.columns) >= {"initiativename", "rank"}:
+#                 st.write("Preview:")
+#                 st.dataframe(df[["initiativename", "rank"]])
+#                 if st.button("Submit from Excel"):
+#                     rows = df[["initiativename", "rank"]].dropna().to_dict("records")
+#                     account = st.session_state.get("account_for_ranks", "")
+#                     if not account:
+#                         st.error("Please enter the Account Name below before submitting.")
+#                     else:
+#                         payload = {"account": account, "rows": rows}
+#                         resp = requests.post(
+#                             f"{API_BASE}/api/update_ranks",
+#                             headers=HEADERS,
+#                             json=payload,
+#                             timeout=30
+#                         )
+#                         if resp.status_code == 200:
+#                             st.success(f"Updated: {resp.json().get('updated')}")
+#                         else:
+#                             st.error(f"Update failed ({resp.status_code}): {resp.text}")
+#             else:
+#                 st.error("Excel must contain 'initiativename' and 'rank' columns.")
+#         except Exception as e:
+#             st.error(f"Failed to read Excel: {e}")
+
+#     st.markdown("---")
+
+#     # Option B: Manual entry
+#     st.subheader("Option B: Manual entry")
+#     account = st.text_input("Account Name for Ranks", key="account_for_ranks")
+#     if "rows" not in st.session_state:
+#         st.session_state.rows = []
+
+#     if st.button("➕ Add Row"):
+#         st.session_state.rows.append({"initiativename": "", "rank": 1})
+
+#     # Render rows with delete support
+#     row_to_delete = None
+#     for idx, row in enumerate(st.session_state.rows):
+#         c1, c2, c3 = st.columns([4, 1, 1])
+#         ini = c1.text_input("Initiative", value=row["initiativename"], key=f"ini{idx}")
+#         rk  = c2.number_input("Rank", value=row["rank"], min_value=1, key=f"rk{idx}")
+#         if c3.button("❌", key=f"del{idx}"):
+#             row_to_delete = idx
+#         st.session_state.rows[idx] = {"initiativename": ini, "rank": rk}
+
+#         if row_to_delete is not None:
+#             break  # stop rendering further rows to avoid index mismatch
+
+#     # If a delete button was clicked, remove that row
+#     if row_to_delete is not None:
+#         st.session_state.rows.pop(row_to_delete)
+
+#     if st.button("Submit Manual Ranks"):
+#         if not account:
+#             st.error("Account Name is required.")
+#         elif not st.session_state.rows:
+#             st.warning("No rows to submit.")
+#         else:
+#             payload = {"account": account, "rows": st.session_state.rows}
+#             resp = requests.post(
+#                 f"{API_BASE}/api/update_ranks",
+#                 headers=HEADERS,
+#                 json=payload,
+#                 timeout=30
+#             )
+#             if resp.status_code == 200:
+#                 st.success(f"Updated: {resp.json().get('updated')}")
+#                 st.session_state.rows = []
+#             else:
+#                 st.error(f"Update failed ({resp.status_code}): {resp.text}")
+
+
+
+
+
 #!/usr/bin/env python3
 import os
 import requests
@@ -459,7 +605,7 @@ import streamlit as st
 import pandas as pd
 
 # ─── Config from Streamlit Secrets ───────────────────────────
-API_BASE = os.getenv("RM_API_BASE")  # e.g. https://rm.example.com:8008
+API_BASE = os.getenv("RM_API_BASE")
 API_KEY  = os.getenv("RM_API_KEY")
 HEADERS  = {"Authorization": f"Bearer {API_KEY}"}
 
@@ -478,7 +624,6 @@ if page == "Setup":
         "generate reports",
     ])
     account   = st.text_input("Account Name")
-
     if st.button("Run Setup"):
         if not ds_path or not operation or not account:
             st.error("All fields are required.")
@@ -515,37 +660,29 @@ elif page == "Upload Ranks":
 
     # Option A: Excel upload
     st.subheader("Option A: Upload Excel file")
-    excel_file = st.file_uploader(
-        "Upload an Excel file with columns 'initiativename' and 'rank'",
-        type=["xlsx"]
-    )
+    excel_file = st.file_uploader("Upload an Excel with 'initiativename' & 'rank'", type=["xlsx"])
     if excel_file:
-        try:
-            df = pd.read_excel(excel_file)
-            if set(df.columns) >= {"initiativename", "rank"}:
-                st.write("Preview:")
-                st.dataframe(df[["initiativename", "rank"]])
-                if st.button("Submit from Excel"):
-                    rows = df[["initiativename", "rank"]].dropna().to_dict("records")
-                    account = st.session_state.get("account_for_ranks", "")
-                    if not account:
-                        st.error("Please enter the Account Name below before submitting.")
+        df = pd.read_excel(excel_file)
+        if set(df.columns) >= {"initiativename", "rank"}:
+            st.dataframe(df[["initiativename", "rank"]])
+            if st.button("Submit from Excel"):
+                rows = df[["initiativename", "rank"]].dropna().to_dict("records")
+                acct = st.session_state.get("account_for_ranks", "")
+                if not acct:
+                    st.error("Enter Account Name below first.")
+                else:
+                    resp = requests.post(
+                        f"{API_BASE}/api/update_ranks",
+                        headers=HEADERS,
+                        json={"account": acct, "rows": rows},
+                        timeout=30
+                    )
+                    if resp.status_code == 200:
+                        st.success(f"Updated: {resp.json().get('updated')}")
                     else:
-                        payload = {"account": account, "rows": rows}
-                        resp = requests.post(
-                            f"{API_BASE}/api/update_ranks",
-                            headers=HEADERS,
-                            json=payload,
-                            timeout=30
-                        )
-                        if resp.status_code == 200:
-                            st.success(f"Updated: {resp.json().get('updated')}")
-                        else:
-                            st.error(f"Update failed ({resp.status_code}): {resp.text}")
-            else:
-                st.error("Excel must contain 'initiativename' and 'rank' columns.")
-        except Exception as e:
-            st.error(f"Failed to read Excel: {e}")
+                        st.error(f"Update failed ({resp.status_code}): {resp.text}")
+        else:
+            st.error("Excel must have 'initiativename' and 'rank' columns.")
 
     st.markdown("---")
 
@@ -558,22 +695,19 @@ elif page == "Upload Ranks":
     if st.button("➕ Add Row"):
         st.session_state.rows.append({"initiativename": "", "rank": 1})
 
-    # Render rows with delete support
-    row_to_delete = None
-    for idx, row in enumerate(st.session_state.rows):
+    to_delete = None
+    for i, row in enumerate(st.session_state.rows):
         c1, c2, c3 = st.columns([4, 1, 1])
-        ini = c1.text_input("Initiative", value=row["initiativename"], key=f"ini{idx}")
-        rk  = c2.number_input("Rank", value=row["rank"], min_value=1, key=f"rk{idx}")
-        if c3.button("❌", key=f"del{idx}"):
-            row_to_delete = idx
-        st.session_state.rows[idx] = {"initiativename": ini, "rank": rk}
+        ini = c1.text_input("Initiative", value=row["initiativename"], key=f"ini{i}")
+        rk  = c2.number_input("Rank", value=row["rank"], min_value=1, key=f"rk{i}")
+        if c3.button("❌", key=f"del{i}"):
+            to_delete = i
+        st.session_state.rows[i] = {"initiativename": ini, "rank": rk}
+        if to_delete is not None:
+            break
 
-        if row_to_delete is not None:
-            break  # stop rendering further rows to avoid index mismatch
-
-    # If a delete button was clicked, remove that row
-    if row_to_delete is not None:
-        st.session_state.rows.pop(row_to_delete)
+    if to_delete is not None:
+        st.session_state.rows.pop(to_delete)
 
     if st.button("Submit Manual Ranks"):
         if not account:
@@ -581,11 +715,10 @@ elif page == "Upload Ranks":
         elif not st.session_state.rows:
             st.warning("No rows to submit.")
         else:
-            payload = {"account": account, "rows": st.session_state.rows}
             resp = requests.post(
                 f"{API_BASE}/api/update_ranks",
                 headers=HEADERS,
-                json=payload,
+                json={"account": account, "rows": st.session_state.rows},
                 timeout=30
             )
             if resp.status_code == 200:
