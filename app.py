@@ -450,6 +450,8 @@
 #                 st.error(f"Update failed ({r.status_code}): {r.text}")
 
 
+
+
 #!/usr/bin/env python3
 import os
 import requests
@@ -582,4 +584,5 @@ elif page == "Upload Ranks":
                 st.session_state.rows = []
             else:
                 st.error(f"Update failed ({resp.status_code}): {resp.text}")
+
 
