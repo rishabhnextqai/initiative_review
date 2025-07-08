@@ -1,4 +1,11 @@
-streamlit
+# FastAPI server and DB/reporting
+fastapi
+uvicorn[standard]
 pandas
 psycopg2-binary
 openpyxl
+# email modules are in stdlib
+
+# Streamlit UI
+streamlit
+requests
